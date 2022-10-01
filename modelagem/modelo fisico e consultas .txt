@@ -1,0 +1,144 @@
+--Victor Coelho da Silva 
+
+
+--1)Criação do schema
+create schema dados_clube;
+
+
+
+--criacão das tabelas seguidas dos insert
+create table dados_clube.clube (
+	nome_clube character varying,
+	data_fundacao date, 
+	estadio character varying,
+	cidade character varying,
+	treinador character varying,
+	nacionalidade character varying,
+	primary key(nome_clube)
+	
+	
+);
+
+
+insert into dados_clube.clube (nome_clube, data_fundacao, estadio,cidade, treinador, nacionalidade) 
+values ('São Paulo Futebol Clube', '25/01/1930', ' Estádio Cícero Pompeu de Toledo', 'São Paulo', 'Rogério Ceni', ' brasileiro');
+ 
+ 
+ create table dados_clube.jogadores(
+	 nome_jogador character varying,
+	 idade integer,
+	 altura float,
+	 pé character varying,
+	 posição character varying,
+	 camisa integer,
+	 nacionalidade character varying ,	
+	 datacadastro timestamp with time zone,
+
+	 
+	 primary key(nome_jogador)
+	 
+ );
+ 
+ 
+ 
+
+
+
+insert into dados_clube.jogadores values('Jandrei', 28, 1.88, 'direito' , 'goleiro', 97, 'brasileiro'), 
+('Igor	Vinícius', 25, 1.74, 'direito', 'lateral-direito', 2,'brasileiro'),
+ ('Diego Costa', 22, 1.85, 'direito', 'zagueiro', 4, 'brasileiro '),
+  ('Arboleda', 29, 1.87, 'direito', 'zagueiro', 5, 'equatoriano'),
+  ('Léo', 26, 1.84, 'esquerdo','zagueiro', 16, 'brasileiro'), 
+  ('Reinaldo',33,  1.79, 'esquerdo', 'lateral-esquerdo', 6, 'brasileiro'),
+  ('Gabriel Neves',23, 1.74, 'direito', 'meio-campista', 15, 'uruguaio' ),
+  ('Igor Gomes', 23, 1.83, 'direito', 'meio_campista', 26, 'brasileiro'),
+  ('Patrick', 29, 1.78,'esquerdo', 'meio-campista', 87, 'brasileiro'),
+  ('Luciano', 29, 1.80, 'esquerdo', 'atacante', 11, 'brasileiro'),
+  ('Calleri', 29, 1.81, 'direito', 'atacante',9,'argentino'),
+  ('Thiago Couto',12 , 1.88 , 'direito', 'goleiro', 22, 'brasileiro'),
+  ('Moreira', 18, 1.76, 'direito', 'lateral-direito', 27, 'português'),
+   ('Rafinha', 35, 1.72, 'direito', 'lateral-direito', 13, 'brasileiro'),
+   ('Miranda', 37, 1.87, 'direito', 'zagueiro', 22, 'brasileiro'),
+   ('Wellington',21, 1.78,'esquerdo', 'lateral-esquerdo', 34 ,'brasileiro'),
+   ('Colorado', 24, 1.90, 'direito', 'meio-campista', 30,'colombiano'),
+   ('Pablo maia', 20,1.78, 'direito', 'meio-campista' ,17, 'brasileiro'),
+   ('Rodrigo Nestor', 21, 1.74, 'esquerdo', 'meio-campista', 25, 'brasileiro'),
+   ('Nikão', 28, 1.75, 'esquerdo', 'meio-campista', 10, 'brasileiro'),
+   ('Marcos Guilherme', 25, 1.74, 'direito', 'atacante', 27, 'brasileiro '),
+   ('Eder Cittadini', 34, 1.78, 'direito', 'atacante', 23, 'italiano');
+   
+  
+  
+create table dados_clube.empréstimo(
+		nome_jogador character varying,
+		valor float,
+		antigo_clube character varying,
+		duração character varying,
+		obrigação_de_compra character varying,
+		primary key (nome_jogador),
+		foreign key(nome_jogador) references dados_clube.jogadores(nome_jogador)
+	);
+	
+	insert into dados_clube.empréstimo	values	('Jandrei', 3000000,'Santos Futebol Clube ', '1 ano', 'Não'),
+	('Rafinha' , 120000000, ' Grêmio Foot-Ball Porto Alegrense ', ' 1 ano', 'Não'),
+	('Calleri', 18000000, 'Club Deportivo Maldonado', '1 ano ', 'Não');
+
+create table dados_clube.definitivo(
+		nome_jogador character varying,
+		valor float,
+		antigo_clube character varying,
+		duração character varying,
+		
+		primary key (nome_jogador),
+		foreign key(nome_jogador) references dados_clube.jogadores(nome_jogador)
+	);	
+	
+	insert into dados_clube.definitivo values ('Eder Cittadini', 8000000, 'Jiangsu Suning',  '3 anos'),('Miranda',60000000, 'Jiangsu Suning', '2 anos'),
+	('Nikão', 9000000, 'Club Athletico Paranaense', '3 anos');
+
+	
+--criação da função, na qual o objetivo é  atualizar de forma automatica  as datas de cadastro
+create or replace function data_cadastro()
+returns trigger as $$
+begin
+	NEW.datacadastro := current_timestamp;
+RETURN NEW;
+	
+end;
+$$ language 'plpgsql';
+
+--gatilho
+
+create trigger data_cadastro_novo_jogadores
+	before insert  --antes do insert irá atualizar a data
+	on dados_clube.jogadores
+	for each row
+	execute procedure data_cadastro();
+
+--** É interessante que este 'comando' seja executado antes insert, pois, assim as datas serão registradas
+
+-- alguns select
+
+select * from dados_clube.jogadores 
+select * from dados_clube.clube
+select * from dados_clube.empréstimo
+select * from dados_clube.definitivo
+
+
+SELECT e.nome FROM emp e
+WHERE EXISTS (SELECT * FROM dependente d WHERE 
+e.cod_emp = d.cod_emp)
+
+--consultas
+
+--retornar jogadores que foram adquiridos por empréstimo 
+select j.nome_jogador from dados_clube.jogadores j where exists (select * from dados_clube.empréstimo e where  e.nome_jogador=j.nome_jogador)
+
+SELECT AVG(salario), cod_depto
+FROM EMP
+GROUP BY cod_depto
+HAVING AVG(salario)>700;
+
+--selecionar a média de	valores dos jogadores com média superior a 80000000
+select avg(valor), nome_jogador from dados_clube.definitivo group by nome_jogador having avg(valor)>8000000
+
